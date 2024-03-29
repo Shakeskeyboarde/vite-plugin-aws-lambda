@@ -23,11 +23,6 @@ export interface AwsLambdaOptions {
 
 /**
  * Helper for building AWS lambda functions with Vite.
- *
- * - Applies appropriate library mode configuration defaults.
- * - Changes library mode module output file extensions to `.mjs`.
- * - Marks all NodeJS internal modules as external.
- * - Zips the output directory.
  */
 export default ({ outFilename }: AwsLambdaOptions = {}): Plugin => {
   let enabled = true;

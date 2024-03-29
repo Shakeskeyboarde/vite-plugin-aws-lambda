@@ -1,7 +1,7 @@
 {
   "name": "vite-plugin-aws-lambda",
   "description": "Helper for building AWS lambda function with Vite.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "ISC",
   "scripts": {
     "test": "eslint src --max-warnings=0",
