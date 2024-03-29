@@ -4,12 +4,12 @@ import path from 'node:path';
 import stream from 'node:stream';
 
 import JSZip from 'jszip';
-import { type LibraryOptions, type Plugin, type Rollup } from 'vite';
+import { type BuildOptions, type LibraryOptions, type Plugin, type Rollup } from 'vite';
 
 /**
  * Options for the AWS Lambda plugin.
  */
-export interface AwsLambdaOptions {
+export interface AwsLambdaPluginOptions {
   /**
    * The output filename for the Lambda function zip file.
    *
@@ -24,7 +24,7 @@ export interface AwsLambdaOptions {
 /**
  * Helper for building AWS lambda functions with Vite.
  */
-export default ({ outFilename }: AwsLambdaOptions = {}): Plugin => {
+export default ({ outFilename }: AwsLambdaPluginOptions = {}): Plugin => {
   let enabled = true;
   let absInDir: string;
   let absOutFilename: string | false;
@@ -71,7 +71,7 @@ export default ({ outFilename }: AwsLambdaOptions = {}): Plugin => {
 const getConfigDefaults = async (
   lib: LibraryOptions,
   rollupOptions: Rollup.RollupOptions | undefined,
-): Promise<ReturnType<Extract<Plugin['config'], Function>>> => {
+): Promise<{ build: BuildOptions }> => {
   return {
     build: {
       lib: {
