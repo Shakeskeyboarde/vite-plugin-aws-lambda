@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import module from 'node:module';
-import path from 'node:path';
+import path, { relative } from 'node:path';
 import stream from 'node:stream';
 
 import JSZip from 'jszip';
@@ -19,20 +19,32 @@ export interface AwsLambdaPluginOptions {
    * to your Vite output directory.
    */
   readonly outFilename?: string | false;
+
+  /**
+   * Suppress log messages from the plugin.
+   */
+  readonly quiet?: boolean;
 }
+
+const PLUGIN_NAME = 'vite-plugin-aws-lambda';
 
 /**
  * Helper for building AWS lambda functions with Vite.
  */
-export default ({ outFilename }: AwsLambdaPluginOptions = {}): Plugin => {
+export default ({ outFilename, quiet = false }: AwsLambdaPluginOptions = {}): Plugin => {
   let enabled = true;
+  let root: string;
   let absInDir: string;
   let absOutFilename: string | false;
 
   return {
-    name: 'vite-plugin-aws-lambda',
+    name: PLUGIN_NAME,
     apply: 'build',
     enforce: 'post',
+    onLog(level, log) {
+      // Filter log messages from this plugin if quiet is enabled.
+      return log.plugin !== PLUGIN_NAME || !quiet;
+    },
     async config({ build }) {
       if (build?.lib === false || !build?.lib?.entry) {
         // This plugin is disabled if there is no library entry point.
@@ -42,28 +54,34 @@ export default ({ outFilename }: AwsLambdaPluginOptions = {}): Plugin => {
 
       return await getConfigDefaults(build.lib, build.rollupOptions);
     },
-    async configResolved({ root, build }) {
+    async configResolved(config) {
       if (!enabled) return;
 
-      absInDir = path.resolve(root, build.outDir);
+      root = config.root;
+      absInDir = path.resolve(config.root, config.build.outDir);
 
       if (outFilename === false) {
         absOutFilename = false;
       }
-      else if (build.emptyOutDir !== false) {
-        absOutFilename = path.resolve(root, build.outDir, outFilename ?? `../${path.basename(build.outDir)}.zip`);
+      else {
+        absOutFilename = path.resolve(root, config.build.outDir, outFilename ?? `../${path.basename(config.build.outDir)}.zip`);
 
+        if (config.build.emptyOutDir !== false) {
         // By default, the zip file is adjacent to the output directory, not
         // inside it. So, this deletes the zip file independently if the
         // emptyOutDir option is not explicitly disabled.
-        await fs.rm(absOutFilename, { force: true, recursive: true });
+          await fs.rm(absOutFilename, { force: true, recursive: true });
+        }
       }
     },
     async closeBundle() {
       if (!enabled) return;
       if (!absOutFilename) return;
 
-      await zipDir(absInDir, absOutFilename);
+      this.info('zipping output directory...');
+      this.info(`filename: ${relative(root, absOutFilename)}"`);
+
+      await zipDir(absInDir, absOutFilename, (filename) => this.info(filename));
     },
   };
 };
@@ -90,19 +108,25 @@ const getConfigDefaults = async (
   };
 };
 
-const zipDir = async (inDir: string, outFilename: string): Promise<void> => {
+const zipDir = async (inDir: string, outFilename: string, onFile: (filename: string) => void): Promise<void> => {
   const entries = await fs.opendir(inDir, { recursive: true });
   const zip = new JSZip();
 
   try {
     for await (const entry of entries) {
       const parentPath = (entry as any).parentPath ?? entry.path;
-      const filename = path.join(parentPath, entry.name);
+      const filename = path.resolve(parentPath, entry.name);
+      const relativeFilename = path.relative(inDir, filename);
+
+      if (filename === outFilename) {
+        // Refuse to add the (previous) zip file to itself.
+        continue;
+      }
 
       if (entry.isDirectory()) {
         const stats = await fs.stat(filename);
 
-        zip.file(path.relative(inDir, filename), null, { dir: true, date: stats.mtime });
+        zip.file(relativeFilename, null, { dir: true, date: stats.mtime });
       }
       else if (entry.isFile()) {
         const [stats, content] = await Promise.all([
@@ -110,7 +134,8 @@ const zipDir = async (inDir: string, outFilename: string): Promise<void> => {
           fs.readFile(filename),
         ]);
 
-        zip.file(path.relative(inDir, filename), content, { date: stats.mtime });
+        onFile(relativeFilename);
+        zip.file(relativeFilename, content, { date: stats.mtime });
       }
     }
   }

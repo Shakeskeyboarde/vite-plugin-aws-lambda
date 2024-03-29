@@ -1,0 +1,15 @@
+{
+  "private": true,
+  "name": "demo",
+  "scripts": {
+    "build": "vite build -c src/vite.config.ts"
+  },
+  "type": "module",
+  "devDependencies": {
+    "vite": "^5.2.7",
+    "vite-plugin-aws-lambda": "workspace:^"
+  },
+  "dependencies": {
+    "@types/aws-lambda": "^8.10.136"
+  }
+}

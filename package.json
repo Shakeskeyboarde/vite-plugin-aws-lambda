@@ -1,36 +1,23 @@
 {
-  "name": "vite-plugin-aws-lambda",
-  "description": "Helper for building AWS lambda function with Vite.",
-  "version": "1.0.3",
-  "license": "ISC",
-  "repository": "Shakeskeyboarde/vite-plugin-aws-lambda",
+  "private": true,
+  "name": "root",
   "scripts": {
-    "test": "eslint src --max-warnings=0",
-    "build": "tsc -p src/tsconfig.json",
-    "prepack": "pnpm test && pnpm build"
+    "lint": "wurk exec eslint src",
+    "build": "wurk run build",
+    "test": "wurk lint --max-warnings=0",
+    "release": "wurk build && wurk test && wurk publish"
   },
   "packageManager": "pnpm@8.15.5+sha256.4b4efa12490e5055d59b9b9fc9438b7d581a6b7af3b5675eb5c5f447cee1a589",
   "type": "module",
-  "files": [
-    "lib"
-  ],
-  "types": "./lib/index.d.ts",
-  "exports": {
-    "import": {
-      "types": "./lib/index.d.ts",
-      "default": "./lib/index.js"
-    }
-  },
   "devDependencies": {
     "@types/node": "^20.11.30",
+    "@wurk/command-exec": "^0.4.0",
+    "@wurk/command-publish": "^0.4.0",
+    "@wurk/command-run": "^0.4.0",
+    "@wurk/command-version": "^0.4.0",
     "eslint": "^8.57.0",
     "eslint-config-rational": "^5.0.9",
-    "typescript": "^5.4.3"
-  },
-  "dependencies": {
-    "jszip": "^3.10.1"
-  },
-  "peerDependencies": {
-    "vite": ">=5.2.7"
+    "typescript": "^5.4.3",
+    "wurk": "^0.4.3"
   }
 }
