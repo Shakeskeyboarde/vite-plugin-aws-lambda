@@ -1,7 +1,7 @@
 {
   "name": "vite-plugin-aws-lambda",
   "description": "Helper for building AWS lambda function with Vite.",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "license": "ISC",
   "repository": {
     "type": "git",
@@ -12,7 +12,9 @@
     "build": "tsc -p src/tsconfig.json"
   },
   "type": "module",
-  "files": ["lib"],
+  "files": [
+    "lib"
+  ],
   "types": "./lib/index.d.ts",
   "exports": {
     "import": {
