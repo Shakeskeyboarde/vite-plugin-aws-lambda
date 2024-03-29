@@ -1,0 +1,15 @@
+.vscode
+.wrangler
+node_modules
+lib
+out
+dist
+coverage
+
+.DS_Store
+.todo
+*.log
+*.tar
+*.gz
+*.tgz
+*.zip
